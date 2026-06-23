@@ -15,6 +15,7 @@
     color: #fff; height: 100dvh;
   }
 
+  /* ── 直式 header ── */
   header {
     width: 100%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
@@ -22,7 +23,7 @@
   }
   header h1 { font-size: 1.05rem; color: #f0a500; letter-spacing: 2px; }
 
-  /* 延遲畫面區 */
+  /* ── 影像區 ── */
   #canvasWrap {
     position: relative; flex: 1; width: 100%;
     display: flex; align-items: center; justify-content: center;
@@ -30,7 +31,7 @@
   }
   #display { display: block; }
 
-  /* 狀態 overlay */
+  /* ── 狀態 overlay ── */
   #overlay {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
@@ -42,7 +43,7 @@
   #overlayText { font-size: 1rem; color: #aaa; letter-spacing: 1px; }
   #countdownNum { font-size: 5rem; font-weight: 900; color: #f0a500; line-height: 1; display: none; }
 
-  /* 錄影中 badge */
+  /* ── 錄影 badge ── */
   #recBadge {
     position: absolute; top: 10px; left: 12px;
     display: none; align-items: center; gap: 6px;
@@ -50,24 +51,20 @@
     border-radius: 20px; font-size: 0.78rem;
   }
   #recBadge.show { display: flex; }
-  #recDot {
-    width: 8px; height: 8px; background: #e53935;
-    border-radius: 50%; animation: blink 1s infinite;
-  }
+  #recDot { width: 8px; height: 8px; background: #e53935; border-radius: 50%; animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-  /* 下方控制區 */
+  /* ── 直式：下方 footer ── */
   footer {
     width: 100%; flex-shrink: 0; background: #111;
     border-top: 1px solid #222;
     padding: 10px 16px 16px;
     display: flex; flex-direction: column; gap: 10px;
+    transition: none;
   }
 
-  /* 鏡頭選擇 */
-  .cam-row {
-    display: flex; justify-content: center; gap: 10px;
-  }
+  /* ── 鏡頭選擇 ── */
+  .cam-row { display: flex; justify-content: center; gap: 10px; }
   .cam-btn {
     flex: 1; max-width: 160px; height: 38px;
     border: 1px solid #444; border-radius: 19px;
@@ -78,10 +75,8 @@
   .cam-btn.active { background: #333; color: #f0a500; border-color: #f0a500; }
   .cam-btn:active { opacity: 0.7; }
 
-  /* 延遲調整 */
-  .delay-row {
-    display: flex; align-items: center; justify-content: center; gap: 0;
-  }
+  /* ── 延遲調整 ── */
+  .delay-row { display: flex; align-items: center; justify-content: center; gap: 0; }
   .delay-row label { color: #aaa; font-size: 0.85rem; margin-right: 12px; }
   .adj-btn {
     width: 44px; height: 44px;
@@ -94,7 +89,7 @@
   #delayDisplay { width: 72px; text-align: center; font-size: 1.5rem; font-weight: bold; color: #f0a500; }
   #delayUnit { color: #aaa; font-size: 0.85rem; }
 
-  /* 主按鈕 */
+  /* ── 主按鈕 ── */
   .btn-row { display: flex; gap: 10px; justify-content: center; }
   .main-btn {
     flex: 1; max-width: 180px; height: 52px;
@@ -106,8 +101,45 @@
   #startBtn { background: #f0a500; color: #111; }
   #pauseBtn { background: #2a2a2a; color: #fff; border: 1px solid #555; }
   #stopBtn  { background: #e53935; color: #fff; }
-
   .hidden-btn { display: none !important; }
+
+  /* ════════════════════════════════
+     橫式：畫面全螢幕，控制區右側半透明
+  ════════════════════════════════ */
+  @media (orientation: landscape) {
+    header { display: none; }
+
+    #canvasWrap {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      flex: none;
+    }
+
+    footer {
+      position: fixed;
+      right: 0; top: 0; bottom: 0;
+      width: 200px;
+      border-top: none;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      background: rgba(10,10,10,0.6);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      padding: 20px 12px;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    /* 橫式下按鈕排直欄 */
+    .cam-row { flex-direction: column; gap: 8px; }
+    .cam-btn { max-width: 100%; height: 36px; font-size: 0.82rem; }
+
+    .delay-row label { display: none; }
+    .adj-btn { width: 38px; height: 38px; font-size: 1.2rem; }
+    #delayDisplay { font-size: 1.3rem; }
+
+    .btn-row { flex-direction: column; gap: 8px; }
+    .main-btn { max-width: 100%; height: 46px; font-size: 0.92rem; }
+  }
 </style>
 </head>
 <body>
@@ -118,13 +150,11 @@
 
 <div id="canvasWrap">
   <canvas id="display"></canvas>
-
   <div id="overlay">
     <div id="overlayIcon">📷</div>
     <div id="overlayText">設定鏡頭後按「開始」</div>
     <div id="countdownNum"></div>
   </div>
-
   <div id="recBadge">
     <div id="recDot"></div>
     <span id="recLabel">錄影中</span>
@@ -132,13 +162,10 @@
 </div>
 
 <footer>
-  <!-- 鏡頭選擇 -->
   <div class="cam-row">
     <button class="cam-btn" id="camFront">📱 前鏡頭</button>
     <button class="cam-btn active" id="camBack">📷 後鏡頭</button>
   </div>
-
-  <!-- 延遲秒數 -->
   <div class="delay-row">
     <label>延遲秒數</label>
     <button class="adj-btn" id="minusBtn">−</button>
@@ -146,8 +173,6 @@
     <span id="delayUnit">秒</span>
     <button class="adj-btn" id="plusBtn">＋</button>
   </div>
-
-  <!-- 控制按鈕 -->
   <div class="btn-row">
     <button class="main-btn" id="startBtn">▶ 開始</button>
     <button class="main-btn hidden-btn" id="pauseBtn">⏸ 暫停</button>
@@ -156,23 +181,23 @@
 </footer>
 
 <script>
-const canvas     = document.getElementById('display');
-const ctx        = canvas.getContext('2d');
-const overlay    = document.getElementById('overlay');
-const overlayIcon = document.getElementById('overlayIcon');
-const overlayText = document.getElementById('overlayText');
+const canvas       = document.getElementById('display');
+const ctx          = canvas.getContext('2d');
+const overlay      = document.getElementById('overlay');
+const overlayIcon  = document.getElementById('overlayIcon');
+const overlayText  = document.getElementById('overlayText');
 const countdownNum = document.getElementById('countdownNum');
-const recBadge   = document.getElementById('recBadge');
-const recDot     = document.getElementById('recDot');
-const recLabel   = document.getElementById('recLabel');
-const startBtn   = document.getElementById('startBtn');
-const pauseBtn   = document.getElementById('pauseBtn');
-const stopBtn    = document.getElementById('stopBtn');
+const recBadge     = document.getElementById('recBadge');
+const recDot       = document.getElementById('recDot');
+const recLabel     = document.getElementById('recLabel');
+const startBtn     = document.getElementById('startBtn');
+const pauseBtn     = document.getElementById('pauseBtn');
+const stopBtn      = document.getElementById('stopBtn');
 const delayDisplay = document.getElementById('delayDisplay');
-const minusBtn   = document.getElementById('minusBtn');
-const plusBtn    = document.getElementById('plusBtn');
-const camFront   = document.getElementById('camFront');
-const camBack    = document.getElementById('camBack');
+const minusBtn     = document.getElementById('minusBtn');
+const plusBtn      = document.getElementById('plusBtn');
+const camFront     = document.getElementById('camFront');
+const camBack      = document.getElementById('camBack');
 
 const hiddenVideo = document.createElement('video');
 hiddenVideo.muted = true;
@@ -190,8 +215,7 @@ let facingMode = 'environment';
 let frameBuffer = [];
 let loopTimer = null;
 let startTime = 0;
-let CAP_W = 480, CAP_H = 270;
-
+let CAP_W = 480, CAP_H = 640;
 const MAX_DIM = 720;
 const FPS = 15;
 const INTERVAL = Math.round(1000 / FPS);
@@ -199,14 +223,12 @@ const INTERVAL = Math.round(1000 / FPS);
 // 鏡頭選擇
 camBack.addEventListener('click', () => {
   facingMode = 'environment';
-  camBack.classList.add('active');
-  camFront.classList.remove('active');
+  camBack.classList.add('active'); camFront.classList.remove('active');
   if (running) { stopCapture(); startCamera(); }
 });
 camFront.addEventListener('click', () => {
   facingMode = 'user';
-  camFront.classList.add('active');
-  camBack.classList.remove('active');
+  camFront.classList.add('active'); camBack.classList.remove('active');
   if (running) { stopCapture(); startCamera(); }
 });
 
@@ -218,22 +240,14 @@ plusBtn.addEventListener('click', () => {
   if (delaySeconds < 60) { delaySeconds++; delayDisplay.textContent = delaySeconds; }
 });
 
-// 開始
 startBtn.addEventListener('click', () => startCamera());
 
-// 暫停 / 繼續
 pauseBtn.addEventListener('click', () => {
   paused = !paused;
-  if (paused) {
-    pauseBtn.textContent = '▶ 繼續';
-    recDot.style.animationPlayState = 'paused';
-  } else {
-    pauseBtn.textContent = '⏸ 暫停';
-    recDot.style.animationPlayState = 'running';
-  }
+  pauseBtn.textContent = paused ? '▶ 繼續' : '⏸ 暫停';
+  recDot.style.animationPlayState = paused ? 'paused' : 'running';
 });
 
-// 停止
 stopBtn.addEventListener('click', stopAll);
 
 function show(...els) { els.forEach(el => el.classList.remove('hidden-btn')); }
@@ -249,19 +263,17 @@ async function startCamera() {
     hiddenVideo.srcObject = stream;
     await hiddenVideo.play();
 
-    // 等待實際影像尺寸
+    // 等待實際尺寸
     await new Promise(resolve => {
       if (hiddenVideo.videoWidth > 0) { resolve(); return; }
       hiddenVideo.addEventListener('loadedmetadata', resolve, { once: true });
     });
 
-    // 依實際尺寸設定捕捉畫布（等比例縮小不超過 MAX_DIM）
     const vw = hiddenVideo.videoWidth  || 480;
     const vh = hiddenVideo.videoHeight || 640;
     const scale = Math.min(1, MAX_DIM / Math.max(vw, vh));
     CAP_W = Math.round(vw * scale);
     CAP_H = Math.round(vh * scale);
-
     capCanvas.width = CAP_W;
     capCanvas.height = CAP_H;
     resizeDisplay();
@@ -276,7 +288,6 @@ async function startCamera() {
     pauseBtn.textContent = '⏸ 暫停';
     recBadge.classList.add('show');
     recDot.style.animationPlayState = 'running';
-
     showOverlay('countdown');
     startLoop();
   } catch (e) {
@@ -292,7 +303,6 @@ function startLoop() {
 
 function tick() {
   if (!running || paused || hiddenVideo.readyState < 2) return;
-
   const now = Date.now();
 
   capCtx.drawImage(hiddenVideo, 0, 0, CAP_W, CAP_H);
@@ -319,8 +329,7 @@ function tick() {
 }
 
 function stopCapture() {
-  running = false;
-  paused  = false;
+  running = false; paused = false;
   if (loopTimer) clearTimeout(loopTimer);
   if (stream) stream.getTracks().forEach(t => t.stop());
   frameBuffer = [];
@@ -329,8 +338,7 @@ function stopCapture() {
 function stopAll() {
   stopCapture();
   stream = null;
-  show(startBtn);
-  hide(pauseBtn, stopBtn);
+  show(startBtn); hide(pauseBtn, stopBtn);
   recBadge.classList.remove('show');
   showOverlay('idle');
 }
@@ -355,18 +363,21 @@ function showOverlay(mode, msg) {
 }
 
 function resizeDisplay() {
-  const wrap = document.getElementById('canvasWrap');
-  const wrapW = wrap.clientWidth, wrapH = wrap.clientHeight;
+  const isLandscape = window.innerWidth > window.innerHeight;
+  const panelW = isLandscape ? 200 : 0;
+  const availW = window.innerWidth - panelW;
+  const availH = isLandscape ? window.innerHeight : document.getElementById('canvasWrap').clientHeight;
   const ratio = CAP_W / CAP_H;
-  let w = wrapW, h = wrapW / ratio;
-  if (h > wrapH) { h = wrapH; w = wrapH * ratio; }
-  canvas.width = CAP_W;
+  let w = availW, h = availW / ratio;
+  if (h > availH) { h = availH; w = availH * ratio; }
+  canvas.width  = CAP_W;
   canvas.height = CAP_H;
-  canvas.style.width = Math.round(w) + 'px';
+  canvas.style.width  = Math.round(w) + 'px';
   canvas.style.height = Math.round(h) + 'px';
 }
 
 window.addEventListener('resize', resizeDisplay);
+window.addEventListener('orientationchange', () => setTimeout(resizeDisplay, 200));
 resizeDisplay();
 </script>
 </body>
