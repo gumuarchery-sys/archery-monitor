@@ -9,52 +9,191 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; background: #000; }
-  body { display: flex; flex-direction: column; align-items: center; font-family: -apple-system, "Helvetica Neue", sans-serif; color: #fff; height: 100dvh; }
-  header { width: 100%; display: flex; align-items: center; justify-content: center; padding: 10px 16px 6px; flex-shrink: 0; }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    color: #fff;
+    height: 100dvh;
+  }
+
+  header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px 6px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
   header h1 { font-size: 1.05rem; color: #f0a500; letter-spacing: 2px; }
-  #canvasWrap { position: relative; flex: 1; width: 100%; overflow: hidden; background: #000; }
-  #display { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; }
-  #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #111; }
+
+  /* 延遲畫面 */
+  #canvasWrap {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    overflow: hidden;
+  }
+  #display {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* 覆蓋在畫面上的狀態 */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #111;
+  }
   #overlay.hidden { display: none; }
   #overlayIcon { font-size: 3.5rem; }
   #overlayText { font-size: 1rem; color: #aaa; letter-spacing: 1px; }
-  #countdownNum { font-size: 5rem; font-weight: 900; color: #f0a500; line-height: 1; }
-  #pauseMask { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; font-size: 5rem; }
-  #pauseMask.show { display: flex; }
-  #recBadge { position: absolute; top: 10px; left: 12px; display: none; align-items: center; gap: 6px; background: rgba(0,0,0,0.55); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; }
+  #countdownNum {
+    font-size: 5rem;
+    font-weight: 900;
+    color: #f0a500;
+    line-height: 1;
+  }
+
+  /* 錄影中提示 */
+  #recBadge {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.55);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    display: none;
+  }
   #recBadge.show { display: flex; }
-  #recDot { width: 8px; height: 8px; background: #e53935; border-radius: 50%; animation: blink 1s infinite; }
+  #recDot {
+    width: 8px; height: 8px;
+    background: #e53935;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+  }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-  #camToggle { position: absolute; top: 10px; right: 12px; background: rgba(0,0,0,0.55); border: none; color: #fff; font-size: 1.3rem; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: none; align-items: center; justify-content: center; }
-  #camToggle.show { display: flex; }
-  footer { width: 100%; flex-shrink: 0; background: #111; border-top: 1px solid #222; padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
-  .delay-row { display: flex; align-items: center; justify-content: center; }
+
+  /* 下方控制區 */
+  footer {
+    width: 100%;
+    flex-shrink: 0;
+    background: #111;
+    border-top: 1px solid #222;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .delay-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
   .delay-row label { color: #aaa; font-size: 0.85rem; margin-right: 12px; }
-  .adj-btn { width: 44px; height: 44px; background: #2a2a2a; border: 1px solid #444; color: #fff; font-size: 1.4rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; flex-shrink: 0; }
+  .adj-btn {
+    width: 44px; height: 44px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: #fff;
+    font-size: 1.4rem;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+    flex-shrink: 0;
+  }
   .adj-btn:active { background: #444; }
-  #delayDisplay { width: 72px; text-align: center; font-size: 1.5rem; font-weight: bold; color: #f0a500; }
+  #delayDisplay {
+    width: 72px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #f0a500;
+  }
   #delayUnit { color: #aaa; font-size: 0.85rem; }
-  .btn-row { display: flex; gap: 10px; justify-content: center; }
-  .main-btn { flex: 1; max-width: 160px; height: 54px; border: none; border-radius: 27px; font-size: 1.05rem; font-weight: bold; cursor: pointer; letter-spacing: 1px; transition: opacity 0.15s; }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  .main-btn {
+    flex: 1;
+    max-width: 200px;
+    height: 54px;
+    border: none;
+    border-radius: 27px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: opacity 0.15s;
+  }
   .main-btn:active { opacity: 0.75; }
   #startBtn { background: #f0a500; color: #111; }
-  #pauseBtn { background: #2a2a2a; color: #fff; border: 1px solid #555; display: none; }
   #stopBtn  { background: #e53935; color: #fff; display: none; }
+
+  /* 相機切換 */
+  #camToggle {
+    position: absolute;
+    top: 10px; right: 12px;
+    background: rgba(0,0,0,0.55);
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #camToggle.show { display: flex; }
 </style>
 </head>
 <body>
-<header><h1>🏹 射箭延遲監看</h1></header>
+
+<header>
+  <h1>🏹 射箭延遲監看</h1>
+</header>
+
 <div id="canvasWrap">
   <canvas id="display"></canvas>
+
   <div id="overlay">
     <div id="overlayIcon">📷</div>
     <div id="overlayText">按下「開始」啟動相機</div>
     <div id="countdownNum" style="display:none"></div>
   </div>
-  <div id="pauseMask">⏸</div>
-  <div id="recBadge"><div id="recDot"></div><span id="recLabel">錄影中</span></div>
-  <button id="camToggle">🔄</button>
+
+  <div id="recBadge">
+    <div id="recDot"></div>
+    <span id="recLabel">錄影中</span>
+  </div>
+
+  <button id="camToggle" title="切換相機">🔄</button>
 </div>
+
 <footer>
   <div class="delay-row">
     <label>延遲秒數</label>
@@ -65,30 +204,202 @@
   </div>
   <div class="btn-row">
     <button class="main-btn" id="startBtn">▶ 開始</button>
-    <button class="main-btn" id="pauseBtn">⏸ 暫停</button>
-    <button class="main-btn" id="stopBtn">✕ 關閉</button>
+    <button class="main-btn" id="stopBtn">■ 停止</button>
   </div>
 </footer>
+
 <script>
-const canvas=document.getElementById('display'),ctx=canvas.getContext('2d'),overlay=document.getElementById('overlay'),overlayIcon=document.getElementById('overlayIcon'),overlayText=document.getElementById('overlayText'),countdownNum=document.getElementById('countdownNum'),recBadge=document.getElementById('recBadge'),recLabel=document.getElementById('recLabel'),camToggle=document.getElementById('camToggle'),pauseMask=document.getElementById('pauseMask'),startBtn=document.getElementById('startBtn'),pauseBtn=document.getElementById('pauseBtn'),stopBtn=document.getElementById('stopBtn'),delayDisplay=document.getElementById('delayDisplay'),minusBtn=document.getElementById('minusBtn'),plusBtn=document.getElementById('plusBtn'),recDot=document.getElementById('recDot');
-const hiddenVideo=document.createElement('video');hiddenVideo.muted=true;hiddenVideo.playsInline=true;hiddenVideo.setAttribute('playsinline','');
-const capCanvas=document.createElement('canvas'),capCtx=capCanvas.getContext('2d',{willReadFrequently:true});
-let delaySeconds=5,running=false,paused=false,stream=null,facingMode='environment',frameBuffer=[],loopTimer=null,startTime=0,CAP_W=720,CAP_H=1280;
-const FPS=15,INTERVAL=Math.round(1000/FPS);
-minusBtn.addEventListener('click',()=>{if(delaySeconds>1){delaySeconds--;delayDisplay.textContent=delaySeconds;}});
-plusBtn.addEventListener('click',()=>{if(delaySeconds<60){delaySeconds++;delayDisplay.textContent=delaySeconds;}});
-startBtn.addEventListener('click',async()=>{await startCamera();});
-pauseBtn.addEventListener('click',()=>{paused=!paused;if(paused){pauseBtn.textContent='▶ 繼續';pauseMask.classList.add('show');recDot.style.animationPlayState='paused';}else{pauseBtn.textContent='⏸ 暫停';pauseMask.classList.remove('show');recDot.style.animationPlayState='running';}});
-stopBtn.addEventListener('click',stopAll);
-camToggle.addEventListener('click',async()=>{facingMode=facingMode==='environment'?'user':'environment';if(running){stopCapture();await startCamera();}});
-async function startCamera(){try{if(stream)stream.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode,width:{ideal:1280},height:{ideal:720}},audio:false});hiddenVideo.srcObject=stream;await hiddenVideo.play();await new Promise(resolve=>{if(hiddenVideo.videoWidth>0){resolve();return;}hiddenVideo.addEventListener('loadedmetadata',resolve,{once:true});});CAP_W=hiddenVideo.videoWidth;CAP_H=hiddenVideo.videoHeight;capCanvas.width=CAP_W;capCanvas.height=CAP_H;resizeDisplay();frameBuffer=[];startTime=Date.now();running=true;paused=false;startBtn.style.display='none';pauseBtn.style.display='';pauseBtn.textContent='⏸ 暫停';stopBtn.style.display='';camToggle.classList.add('show');recBadge.classList.add('show');pauseMask.classList.remove('show');showOverlay('countdown');startLoop();}catch(e){showOverlay('error',e.message);}}
-function startLoop(){if(!running)return;tick();loopTimer=setTimeout(startLoop,INTERVAL);}
-function tick(){if(!running||hiddenVideo.readyState<2||paused)return;const now=Date.now();capCtx.drawImage(hiddenVideo,0,0,CAP_W,CAP_H);const imageData=capCtx.getImageData(0,0,CAP_W,CAP_H);frameBuffer.push({data:imageData,ts:now});const cutoff=now-(delaySeconds+4)*1000;while(frameBuffer.length>0&&frameBuffer[0].ts<cutoff)frameBuffer.shift();const targetTs=now-delaySeconds*1000;let bestFrame=null;for(let i=frameBuffer.length-1;i>=0;i--){if(frameBuffer[i].ts<=targetTs){bestFrame=frameBuffer[i];break;}}const elapsed=now-startTime;if(bestFrame){overlay.classList.add('hidden');ctx.putImageData(bestFrame.data,0,0);recLabel.textContent=`延遲 ${delaySeconds} 秒`;}else{countdownNum.textContent=Math.ceil((delaySeconds*1000-elapsed)/1000)>0?Math.ceil((delaySeconds*1000-elapsed)/1000):'...';}}
-function stopCapture(){running=false;paused=false;if(loopTimer)clearTimeout(loopTimer);if(stream)stream.getTracks().forEach(t=>t.stop());frameBuffer=[];}
-function stopAll(){stopCapture();stream=null;startBtn.style.display='';pauseBtn.style.display='none';stopBtn.style.display='none';camToggle.classList.remove('show');recBadge.classList.remove('show');pauseMask.classList.remove('show');showOverlay('idle');}
-function showOverlay(mode,msg){overlay.classList.remove('hidden');if(mode==='idle'){overlayIcon.style.display='';overlayIcon.textContent='📷';overlayText.style.display='';overlayText.textContent='按下「開始」啟動相機';countdownNum.style.display='none';}else if(mode==='countdown'){overlayIcon.style.display='none';overlayText.style.display='';overlayText.textContent='準備播放延遲畫面…';countdownNum.style.display='';}else if(mode==='error'){overlayIcon.style.display='';overlayIcon.textContent='⚠️';overlayText.style.display='';overlayText.textContent='相機錯誤：'+(msg||'');countdownNum.style.display='none';}}
-function resizeDisplay(){const wrap=document.getElementById('canvasWrap'),wrapW=wrap.clientWidth,wrapH=wrap.clientHeight,camRatio=CAP_W/CAP_H,wrapRatio=wrapW/wrapH;let w,h;if(camRatio>wrapRatio){h=wrapH;w=wrapH*camRatio;}else{w=wrapW;h=wrapW/camRatio;}canvas.width=CAP_W;canvas.height=CAP_H;canvas.style.width=Math.round(w)+'px';canvas.style.height=Math.round(h)+'px';}
-window.addEventListener('resize',resizeDisplay);resizeDisplay();
+const canvas = document.getElementById('display');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayIcon = document.getElementById('overlayIcon');
+const overlayText = document.getElementById('overlayText');
+const countdownNum = document.getElementById('countdownNum');
+const recBadge = document.getElementById('recBadge');
+const recLabel = document.getElementById('recLabel');
+const camToggle = document.getElementById('camToggle');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const delayDisplay = document.getElementById('delayDisplay');
+const minusBtn = document.getElementById('minusBtn');
+const plusBtn = document.getElementById('plusBtn');
+
+// 捕捉用的隱藏 video
+const hiddenVideo = document.createElement('video');
+hiddenVideo.muted = true;
+hiddenVideo.playsInline = true;
+hiddenVideo.setAttribute('playsinline', '');
+
+// 捕捉用的 offscreen canvas
+const capCanvas = document.createElement('canvas');
+const capCtx = capCanvas.getContext('2d', { willReadFrequently: true });
+
+let delaySeconds = 5;
+let running = false;
+let stream = null;
+let facingMode = 'environment'; // 預設後鏡頭
+let frameBuffer = []; // { data: ImageData, ts: number }
+let loopTimer = null;
+let startTime = 0;
+
+const CAP_W = 480, CAP_H = 270; // 16:9 捕捉解析度
+const FPS = 15;
+const INTERVAL = Math.round(1000 / FPS);
+
+// 延遲調整
+minusBtn.addEventListener('click', () => {
+  if (delaySeconds > 1) { delaySeconds--; delayDisplay.textContent = delaySeconds; }
+});
+plusBtn.addEventListener('click', () => {
+  if (delaySeconds < 60) { delaySeconds++; delayDisplay.textContent = delaySeconds; }
+});
+
+// 開始
+startBtn.addEventListener('click', async () => {
+  await startCamera();
+});
+
+// 停止
+stopBtn.addEventListener('click', stopAll);
+
+// 切換相機
+camToggle.addEventListener('click', async () => {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  if (running) {
+    stopCapture();
+    await startCamera();
+  }
+});
+
+async function startCamera() {
+  try {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    hiddenVideo.srcObject = stream;
+    await hiddenVideo.play();
+
+    // 設定 canvas 尺寸
+    capCanvas.width = CAP_W;
+    capCanvas.height = CAP_H;
+    resizeDisplay();
+
+    frameBuffer = [];
+    startTime = Date.now();
+    running = true;
+
+    startBtn.style.display = 'none';
+    stopBtn.style.display = '';
+    camToggle.classList.add('show');
+    recBadge.classList.add('show');
+
+    showOverlay('countdown');
+    startLoop();
+  } catch (e) {
+    showOverlay('error', e.message);
+  }
+}
+
+function startLoop() {
+  if (!running) return;
+  tick();
+  loopTimer = setTimeout(startLoop, INTERVAL);
+}
+
+function tick() {
+  if (!running || hiddenVideo.readyState < 2) return;
+
+  const now = Date.now();
+
+  // 捕捉當下影格
+  capCtx.drawImage(hiddenVideo, 0, 0, CAP_W, CAP_H);
+  const imageData = capCtx.getImageData(0, 0, CAP_W, CAP_H);
+  frameBuffer.push({ data: imageData, ts: now });
+
+  // 清除過舊的影格
+  const cutoff = now - (delaySeconds + 4) * 1000;
+  while (frameBuffer.length > 0 && frameBuffer[0].ts < cutoff) frameBuffer.shift();
+
+  // 顯示延遲影格
+  const targetTs = now - delaySeconds * 1000;
+  let bestFrame = null;
+  for (let i = frameBuffer.length - 1; i >= 0; i--) {
+    if (frameBuffer[i].ts <= targetTs) { bestFrame = frameBuffer[i]; break; }
+  }
+
+  const elapsed = now - startTime;
+  if (bestFrame) {
+    overlay.classList.add('hidden');
+    ctx.putImageData(bestFrame.data, 0, 0);
+    recLabel.textContent = `延遲 ${delaySeconds} 秒`;
+  } else {
+    // 倒數等待
+    const remaining = Math.ceil((delaySeconds * 1000 - elapsed) / 1000);
+    if (remaining > 0) {
+      countdownNum.textContent = remaining;
+    } else {
+      countdownNum.textContent = '...';
+    }
+  }
+}
+
+function stopCapture() {
+  running = false;
+  if (loopTimer) clearTimeout(loopTimer);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  frameBuffer = [];
+}
+
+function stopAll() {
+  stopCapture();
+  stream = null;
+  startBtn.style.display = '';
+  stopBtn.style.display = 'none';
+  camToggle.classList.remove('show');
+  recBadge.classList.remove('show');
+  showOverlay('idle');
+}
+
+function showOverlay(mode, msg) {
+  overlay.classList.remove('hidden');
+  if (mode === 'idle') {
+    overlayIcon.style.display = '';
+    overlayIcon.textContent = '📷';
+    overlayText.style.display = '';
+    overlayText.textContent = '按下「開始」啟動相機';
+    countdownNum.style.display = 'none';
+  } else if (mode === 'countdown') {
+    overlayIcon.style.display = 'none';
+    overlayText.style.display = '';
+    overlayText.textContent = '準備播放延遲畫面…';
+    countdownNum.style.display = '';
+  } else if (mode === 'error') {
+    overlayIcon.style.display = '';
+    overlayIcon.textContent = '⚠️';
+    overlayText.style.display = '';
+    overlayText.textContent = '相機錯誤：' + (msg || '');
+    countdownNum.style.display = 'none';
+  }
+}
+
+function resizeDisplay() {
+  const wrap = document.getElementById('canvasWrap');
+  const wrapW = wrap.clientWidth;
+  const wrapH = wrap.clientHeight;
+  // 維持 16:9 比例
+  const ratio = CAP_W / CAP_H;
+  let w = wrapW, h = wrapW / ratio;
+  if (h > wrapH) { h = wrapH; w = wrapH * ratio; }
+  canvas.width = CAP_W;
+  canvas.height = CAP_H;
+  canvas.style.width = Math.round(w) + 'px';
+  canvas.style.height = Math.round(h) + 'px';
+}
+
+window.addEventListener('resize', resizeDisplay);
+resizeDisplay();
 </script>
 </body>
 </html>
