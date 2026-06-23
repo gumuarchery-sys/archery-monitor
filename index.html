@@ -190,8 +190,9 @@ let facingMode = 'environment';
 let frameBuffer = [];
 let loopTimer = null;
 let startTime = 0;
+let CAP_W = 480, CAP_H = 270;
 
-const CAP_W = 480, CAP_H = 270;
+const MAX_DIM = 720;
 const FPS = 15;
 const INTERVAL = Math.round(1000 / FPS);
 
@@ -247,6 +248,19 @@ async function startCamera() {
     });
     hiddenVideo.srcObject = stream;
     await hiddenVideo.play();
+
+    // 等待實際影像尺寸
+    await new Promise(resolve => {
+      if (hiddenVideo.videoWidth > 0) { resolve(); return; }
+      hiddenVideo.addEventListener('loadedmetadata', resolve, { once: true });
+    });
+
+    // 依實際尺寸設定捕捉畫布（等比例縮小不超過 MAX_DIM）
+    const vw = hiddenVideo.videoWidth  || 480;
+    const vh = hiddenVideo.videoHeight || 640;
+    const scale = Math.min(1, MAX_DIM / Math.max(vw, vh));
+    CAP_W = Math.round(vw * scale);
+    CAP_H = Math.round(vh * scale);
 
     capCanvas.width = CAP_W;
     capCanvas.height = CAP_H;
