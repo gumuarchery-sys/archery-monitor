@@ -150,8 +150,9 @@
     transition: opacity 0.15s;
   }
   .main-btn:active { opacity: 0.75; }
-  #startBtn { background: #f0a500; color: #111; }
-  #stopBtn  { background: #e53935; color: #fff; display: none; }
+  #startBtn  { background: #f0a500; color: #111; }
+  #pauseBtn  { background: #2a2a2a; color: #fff; border: 1px solid #555; display: none; }
+  #stopBtn   { background: #e53935; color: #fff; display: none; }
 
   /* 相機切換 */
   #camToggle {
@@ -204,6 +205,7 @@
   </div>
   <div class="btn-row">
     <button class="main-btn" id="startBtn">▶ 開始</button>
+    <button class="main-btn" id="pauseBtn">⏸ 暫停</button>
     <button class="main-btn" id="stopBtn">■ 停止</button>
   </div>
 </footer>
@@ -216,9 +218,11 @@ const overlayIcon = document.getElementById('overlayIcon');
 const overlayText = document.getElementById('overlayText');
 const countdownNum = document.getElementById('countdownNum');
 const recBadge = document.getElementById('recBadge');
+const recDot = document.getElementById('recDot');
 const recLabel = document.getElementById('recLabel');
 const camToggle = document.getElementById('camToggle');
 const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
 const stopBtn = document.getElementById('stopBtn');
 const delayDisplay = document.getElementById('delayDisplay');
 const minusBtn = document.getElementById('minusBtn');
@@ -236,6 +240,7 @@ const capCtx = capCanvas.getContext('2d', { willReadFrequently: true });
 
 let delaySeconds = 5;
 let running = false;
+let paused = false;
 let stream = null;
 let facingMode = 'environment'; // 預設後鏡頭
 let frameBuffer = []; // { data: ImageData, ts: number }
@@ -257,6 +262,18 @@ plusBtn.addEventListener('click', () => {
 // 開始
 startBtn.addEventListener('click', async () => {
   await startCamera();
+});
+
+// 暫停 / 繼續
+pauseBtn.addEventListener('click', () => {
+  paused = !paused;
+  if (paused) {
+    pauseBtn.textContent = '▶ 繼續';
+    recDot.style.animationPlayState = 'paused';
+  } else {
+    pauseBtn.textContent = '⏸ 暫停';
+    recDot.style.animationPlayState = 'running';
+  }
 });
 
 // 停止
@@ -290,10 +307,14 @@ async function startCamera() {
     startTime = Date.now();
     running = true;
 
+    paused = false;
     startBtn.style.display = 'none';
+    pauseBtn.style.display = '';
+    pauseBtn.textContent = '⏸ 暫停';
     stopBtn.style.display = '';
     camToggle.classList.add('show');
     recBadge.classList.add('show');
+    recDot.style.animationPlayState = 'running';
 
     showOverlay('countdown');
     startLoop();
@@ -309,7 +330,7 @@ function startLoop() {
 }
 
 function tick() {
-  if (!running || hiddenVideo.readyState < 2) return;
+  if (!running || paused || hiddenVideo.readyState < 2) return;
 
   const now = Date.now();
 
@@ -347,6 +368,7 @@ function tick() {
 
 function stopCapture() {
   running = false;
+  paused = false;
   if (loopTimer) clearTimeout(loopTimer);
   if (stream) stream.getTracks().forEach(t => t.stop());
   frameBuffer = [];
@@ -356,6 +378,7 @@ function stopAll() {
   stopCapture();
   stream = null;
   startBtn.style.display = '';
+  pauseBtn.style.display = 'none';
   stopBtn.style.display = 'none';
   camToggle.classList.remove('show');
   recBadge.classList.remove('show');
