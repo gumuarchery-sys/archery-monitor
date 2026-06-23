@@ -364,8 +364,7 @@ function showOverlay(mode, msg) {
 
 function resizeDisplay() {
   const isLandscape = window.innerWidth > window.innerHeight;
-  const panelW = isLandscape ? 200 : 0;
-  const availW = window.innerWidth - panelW;
+  const availW = window.innerWidth;
   const availH = isLandscape ? window.innerHeight : document.getElementById('canvasWrap').clientHeight;
   const ratio = CAP_W / CAP_H;
   let w = availW, h = availW / ratio;
