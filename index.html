@@ -54,13 +54,12 @@
   #recDot { width: 8px; height: 8px; background: #e53935; border-radius: 50%; animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-  /* ── 直式：下方 footer ── */
+  /* ── 直式 footer ── */
   footer {
     width: 100%; flex-shrink: 0; background: #111;
     border-top: 1px solid #222;
     padding: 10px 16px 16px;
     display: flex; flex-direction: column; gap: 10px;
-    transition: none;
   }
 
   /* ── 鏡頭選擇 ── */
@@ -98,38 +97,63 @@
     letter-spacing: 1px; transition: opacity 0.15s;
   }
   .main-btn:active { opacity: 0.75; }
-  #startBtn { background: #f0a500; color: #111; }
-  #pauseBtn { background: #2a2a2a; color: #fff; border: 1px solid #555; }
-  #stopBtn  { background: #e53935; color: #fff; }
+  #startBtn  { background: #f0a500; color: #111; }
+  #pauseBtn  { background: #2a2a2a; color: #fff; border: 1px solid #555; }
+  #stopBtn   { background: #e53935; color: #fff; }
+  #shotBtn   { background: #1a6; color: #fff; }
   .hidden-btn { display: none !important; }
 
+  /* ── 收起按鈕（直式：footer 頂部） ── */
+  #panelToggle {
+    display: none; /* 橫式才用 */
+  }
+
   /* ════════════════════════════════
-     橫式：畫面全螢幕，控制區右側半透明
+     橫式：全螢幕影像 + 右側浮動面板
   ════════════════════════════════ */
   @media (orientation: landscape) {
     header { display: none; }
 
     #canvasWrap {
       position: fixed; inset: 0;
-      width: 100%; height: 100%;
-      flex: none;
+      width: 100%; height: 100%; flex: none;
     }
 
     footer {
       position: fixed;
-      right: 0; top: 0; bottom: 0;
-      width: 200px;
+      right: 0; top: 0; bottom: 0; width: 200px;
       border-top: none;
       border-left: 1px solid rgba(255,255,255,0.1);
-      background: rgba(10,10,10,0.6);
+      background: rgba(10,10,10,0.65);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       padding: 20px 12px;
       justify-content: center;
       z-index: 20;
+      transition: right 0.28s ease;
     }
+    footer.collapsed { right: -164px; }
 
-    /* 橫式下按鈕排直欄 */
+    /* 收起按鈕：貼在面板左邊緣 */
+    #panelToggle {
+      display: flex;
+      position: absolute;
+      left: -32px; top: 50%;
+      transform: translateY(-50%);
+      width: 28px; height: 52px;
+      background: rgba(10,10,10,0.65);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-right: none;
+      border-radius: 10px 0 0 10px;
+      color: #aaa; font-size: 0.8rem;
+      cursor: pointer;
+      align-items: center; justify-content: center;
+      z-index: 21;
+    }
+    #panelToggle:active { background: rgba(40,40,40,0.8); }
+
     .cam-row { flex-direction: column; gap: 8px; }
     .cam-btn { max-width: 100%; height: 36px; font-size: 0.82rem; }
 
@@ -161,7 +185,10 @@
   </div>
 </div>
 
-<footer>
+<footer id="footer">
+  <!-- 收起按鈕（橫式用，貼在面板左緣） -->
+  <button id="panelToggle" title="收起面板">❯</button>
+
   <div class="cam-row">
     <button class="cam-btn" id="camFront">📱 前鏡頭</button>
     <button class="cam-btn active" id="camBack">📷 後鏡頭</button>
@@ -176,6 +203,7 @@
   <div class="btn-row">
     <button class="main-btn" id="startBtn">▶ 開始</button>
     <button class="main-btn hidden-btn" id="pauseBtn">⏸ 暫停</button>
+    <button class="main-btn hidden-btn" id="shotBtn">📸 截圖</button>
     <button class="main-btn hidden-btn" id="stopBtn">■ 停止</button>
   </div>
 </footer>
@@ -190,8 +218,11 @@ const countdownNum = document.getElementById('countdownNum');
 const recBadge     = document.getElementById('recBadge');
 const recDot       = document.getElementById('recDot');
 const recLabel     = document.getElementById('recLabel');
+const footer       = document.getElementById('footer');
+const panelToggle  = document.getElementById('panelToggle');
 const startBtn     = document.getElementById('startBtn');
 const pauseBtn     = document.getElementById('pauseBtn');
+const shotBtn      = document.getElementById('shotBtn');
 const stopBtn      = document.getElementById('stopBtn');
 const delayDisplay = document.getElementById('delayDisplay');
 const minusBtn     = document.getElementById('minusBtn');
@@ -200,27 +231,27 @@ const camFront     = document.getElementById('camFront');
 const camBack      = document.getElementById('camBack');
 
 const hiddenVideo = document.createElement('video');
-hiddenVideo.muted = true;
-hiddenVideo.playsInline = true;
+hiddenVideo.muted = true; hiddenVideo.playsInline = true;
 hiddenVideo.setAttribute('playsinline', '');
 
 const capCanvas = document.createElement('canvas');
 const capCtx = capCanvas.getContext('2d', { willReadFrequently: true });
 
-let delaySeconds = 5;
-let running = false;
-let paused  = false;
-let stream  = null;
-let facingMode = 'environment';
-let frameBuffer = [];
-let loopTimer = null;
-let startTime = 0;
+let delaySeconds = 5, running = false, paused = false;
+let stream = null, facingMode = 'environment';
+let frameBuffer = [], loopTimer = null, startTime = 0;
 let CAP_W = 480, CAP_H = 640;
-const MAX_DIM = 720;
-const FPS = 15;
-const INTERVAL = Math.round(1000 / FPS);
+let wakeLock = null;
 
-// 鏡頭選擇
+const MAX_DIM = 720, FPS = 15, INTERVAL = Math.round(1000 / FPS);
+
+// ── 收起面板 ──
+panelToggle.addEventListener('click', () => {
+  footer.classList.toggle('collapsed');
+  panelToggle.textContent = footer.classList.contains('collapsed') ? '❮' : '❯';
+});
+
+// ── 鏡頭選擇 ──
 camBack.addEventListener('click', () => {
   facingMode = 'environment';
   camBack.classList.add('active'); camFront.classList.remove('active');
@@ -232,7 +263,7 @@ camFront.addEventListener('click', () => {
   if (running) { stopCapture(); startCamera(); }
 });
 
-// 延遲調整
+// ── 延遲調整 ──
 minusBtn.addEventListener('click', () => {
   if (delaySeconds > 1) { delaySeconds--; delayDisplay.textContent = delaySeconds; }
 });
@@ -248,11 +279,38 @@ pauseBtn.addEventListener('click', () => {
   recDot.style.animationPlayState = paused ? 'paused' : 'running';
 });
 
+// ── 截圖 ──
+shotBtn.addEventListener('click', () => {
+  const dataUrl = canvas.toDataURL('image/png');
+  // iOS Safari 開新分頁讓使用者長按儲存；其他瀏覽器直接下載
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `射箭_${new Date().toLocaleTimeString('zh-TW').replace(/:/g,'-')}.png`;
+  a.target = '_blank';
+  a.click();
+});
+
 stopBtn.addEventListener('click', stopAll);
 
 function show(...els) { els.forEach(el => el.classList.remove('hidden-btn')); }
 function hide(...els) { els.forEach(el => el.classList.add('hidden-btn')); }
 
+// ── 螢幕常亮 ──
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (running && document.visibilityState === 'visible') acquireWakeLock();
+});
+
+// ── 開始相機 ──
 async function startCamera() {
   try {
     if (stream) stream.getTracks().forEach(t => t.stop());
@@ -263,7 +321,6 @@ async function startCamera() {
     hiddenVideo.srcObject = stream;
     await hiddenVideo.play();
 
-    // 等待實際尺寸
     await new Promise(resolve => {
       if (hiddenVideo.videoWidth > 0) { resolve(); return; }
       hiddenVideo.addEventListener('loadedmetadata', resolve, { once: true });
@@ -274,21 +331,18 @@ async function startCamera() {
     const scale = Math.min(1, MAX_DIM / Math.max(vw, vh));
     CAP_W = Math.round(vw * scale);
     CAP_H = Math.round(vh * scale);
-    capCanvas.width = CAP_W;
-    capCanvas.height = CAP_H;
+    capCanvas.width = CAP_W; capCanvas.height = CAP_H;
     resizeDisplay();
 
-    frameBuffer = [];
-    startTime = Date.now();
-    running = true;
-    paused  = false;
+    frameBuffer = []; startTime = Date.now();
+    running = true; paused = false;
 
-    hide(startBtn);
-    show(pauseBtn, stopBtn);
+    hide(startBtn); show(pauseBtn, shotBtn, stopBtn);
     pauseBtn.textContent = '⏸ 暫停';
     recBadge.classList.add('show');
     recDot.style.animationPlayState = 'running';
     showOverlay('countdown');
+    acquireWakeLock();
     startLoop();
   } catch (e) {
     showOverlay('error', e.message);
@@ -310,21 +364,21 @@ function tick() {
   frameBuffer.push({ data: imageData, ts: now });
 
   const cutoff = now - (delaySeconds + 4) * 1000;
-  while (frameBuffer.length > 0 && frameBuffer[0].ts < cutoff) frameBuffer.shift();
+  while (frameBuffer.length && frameBuffer[0].ts < cutoff) frameBuffer.shift();
 
   const targetTs = now - delaySeconds * 1000;
-  let bestFrame = null;
+  let best = null;
   for (let i = frameBuffer.length - 1; i >= 0; i--) {
-    if (frameBuffer[i].ts <= targetTs) { bestFrame = frameBuffer[i]; break; }
+    if (frameBuffer[i].ts <= targetTs) { best = frameBuffer[i]; break; }
   }
 
-  if (bestFrame) {
+  if (best) {
     overlay.classList.add('hidden');
-    ctx.putImageData(bestFrame.data, 0, 0);
+    ctx.putImageData(best.data, 0, 0);
     recLabel.textContent = `延遲 ${delaySeconds} 秒`;
   } else {
-    const remaining = Math.ceil((delaySeconds * 1000 - (now - startTime)) / 1000);
-    countdownNum.textContent = remaining > 0 ? remaining : '...';
+    const rem = Math.ceil((delaySeconds * 1000 - (now - startTime)) / 1000);
+    countdownNum.textContent = rem > 0 ? rem : '...';
   }
 }
 
@@ -336,9 +390,9 @@ function stopCapture() {
 }
 
 function stopAll() {
-  stopCapture();
-  stream = null;
-  show(startBtn); hide(pauseBtn, stopBtn);
+  stopCapture(); stream = null;
+  releaseWakeLock();
+  show(startBtn); hide(pauseBtn, shotBtn, stopBtn);
   recBadge.classList.remove('show');
   showOverlay('idle');
 }
@@ -363,14 +417,15 @@ function showOverlay(mode, msg) {
 }
 
 function resizeDisplay() {
-  const isLandscape = window.innerWidth > window.innerHeight;
   const availW = window.innerWidth;
-  const availH = isLandscape ? window.innerHeight : document.getElementById('canvasWrap').clientHeight;
+  const isLandscape = window.innerWidth > window.innerHeight;
+  const availH = isLandscape
+    ? window.innerHeight
+    : document.getElementById('canvasWrap').clientHeight;
   const ratio = CAP_W / CAP_H;
   let w = availW, h = availW / ratio;
   if (h > availH) { h = availH; w = availH * ratio; }
-  canvas.width  = CAP_W;
-  canvas.height = CAP_H;
+  canvas.width = CAP_W; canvas.height = CAP_H;
   canvas.style.width  = Math.round(w) + 'px';
   canvas.style.height = Math.round(h) + 'px';
 }
